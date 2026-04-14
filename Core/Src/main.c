@@ -47,8 +47,7 @@
 /* Private variables ---------------------------------------------------------*/
 
 /* USER CODE BEGIN PV */
-volatile uint32_t count = 0;   // 计数器，由中断更新
-volatile uint8_t progress = 0; // 进度条，由中断更新
+volatile uint8_t progress = 0;  // 进度条，由中断更新
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -121,16 +120,12 @@ int main(void)
     // 显示标题
     OLED_ShowString(1, 1, "Progress Bar");
     
-    // 显示连续进度条（第 2 行，从第 1 列开始，宽度 100 像素）
+    // 显示进度条
     OLED_ShowProgressBar(2, 1, 100, progress);
-    
-    // 显示计数（由中断更新）
-    sprintf(text, "Count: %lu", count);
-    OLED_ShowString(3, 1, text);
     
     // 显示当前进度百分比
     sprintf(text, "Progress: %3d%%", progress);
-    OLED_ShowString(4, 1, text);
+    OLED_ShowString(3, 1, text);
     
     OLED_Refresh();
     
@@ -183,6 +178,8 @@ void	HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 {
   if (htim->Instance == TIM2)
   {
+    static uint32_t count = 0;  // 中断计数器（静态变量，仅在中断内部使用）
+    
     if(count % 5 == 0)  // 5ms 执行一次
     {
 
