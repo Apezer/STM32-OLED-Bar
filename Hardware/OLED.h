@@ -6,6 +6,7 @@
 extern uint8_t OLED_DisplayBuf[8][128];
 extern const uint8_t Diode[];
 extern const uint8_t BMP[];
+extern const uint8_t claude_logo[];
 extern const uint8_t NJtech[];
  
 void OLED_Init(void);

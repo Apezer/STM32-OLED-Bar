@@ -48,6 +48,8 @@
 
 /* USER CODE BEGIN PV */
 volatile uint8_t progress = 0;  // 进度条，由中断更新
+volatile uint8_t show_logo = 0;  // logo显示标志
+volatile uint8_t progress_done = 0;  // 进度条是否已完成
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -96,7 +98,7 @@ int main(void)
   /* USER CODE BEGIN 2 */
   LED_OFF();
   OLED_Init();
-  HAL_TIM_Base_Start_IT(&htim2);  // 启动定时器中断
+
   OLED_Clear();
   OLED_ShowString(1, 1, "OLED Display");
   OLED_ShowString(2, 1, "STM32F103C8T6");
@@ -104,7 +106,7 @@ int main(void)
   OLED_Refresh();
   
   HAL_Delay(2000);  // 显示 2 秒
-
+  HAL_TIM_Base_Start_IT(&htim2);  // 启动定时器中断
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -114,20 +116,30 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-    // 清屏
-    OLED_Clear();
-    
-    // 显示标题
-    OLED_ShowString(1, 1, "Progress Bar");
-    
-    // 显示进度条
-    OLED_ShowProgressBar(2, 1, 100, progress);
-    
-    // 显示当前进度百分比
-    sprintf(text, "Progress: %3d%%", progress);
-    OLED_ShowString(3, 1, text);
-    
-    OLED_Refresh();
+    if (progress_done)
+    {
+      // 进度条已完成，显示Claude logo
+      OLED_Clear();
+      OLED_ShowImage(0, 0, 128, 64, claude_logo);
+      OLED_Refresh();
+    }
+    else
+    {
+      // 清屏
+      OLED_Clear();
+      
+      // 显示标题
+      OLED_ShowString(1, 1, "Progress Bar");
+      
+      // 显示进度条
+      OLED_ShowProgressBar(2, 1, 100, progress);
+      
+      // 显示当前进度百分比
+      sprintf(text, "Progress: %3d%%", progress);
+      OLED_ShowString(3, 1, text);
+      
+      OLED_Refresh();
+    }
     
     HAL_Delay(20);  // 每 20ms 更新一次
   }
@@ -186,10 +198,15 @@ void	HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
     }
     if(count % 20 == 0)  // 20ms 更新一次进度条
     {
-      progress++;
-      if (progress > 100)
+      if (!progress_done)  // 进度条未完成才更新
       {
-        progress = 0;
+        progress++;
+        if (progress >= 100)
+        {
+          progress = 100;  // 进度条到达100%
+          progress_done = 1;  // 设置进度条完成标志
+          show_logo = 1;   // 设置显示logo标志
+        }
       }
     }
     if(count % 1000 == 0)  // 1s 执行一次
